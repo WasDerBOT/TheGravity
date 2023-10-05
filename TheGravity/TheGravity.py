@@ -74,10 +74,11 @@ def getDist(a,b):
     return abs(sqrt(c[0]**2 + c[1] ** 2)) + 1
 def getAttraction(a,b):
     c = array([b.pos[0] - a.pos[0],b.pos[1] - a.pos[1]])
-    c = c / 100 * G * ((a.mass * b.mass) / getDist(a,b)**2 )
+    c = (c / 100 * G * ((a.mass * b.mass) / getDist(a,b)**2 )) / (0.1 * a.mass)
     return c
 zero = Planet(array([0,0]),0,array([0,0]))
 
+spamming = False
 creating = False
 moving = False
 grabbed = False
@@ -153,15 +154,17 @@ while running:
             redirected = zero
         # TO add all time creating of planet by pressing c
         if e.type == KEYDOWN and e.key == K_c and not(creating) and not(moving):
-            
+            spamming = True
             mx,my = mouse.get_pos()
             mx -= cam.x
             my -= cam.y
-            Objects.append(Planet(array([mx,my]),10,-1 * array([0,0])))
+            
+        if e.type == KEYUP and e.key == K_c and not(creating) and not(moving):
+            spamming = False
         if e.type == KEYUP and e.key == K_TAB and not(creating) and not(moving):
             paused = not(paused)
         if e.type == KEYDOWN and e.key == K_d and not(creating) and not(moving):
-            print("d")
+            
             mx,my = mouse.get_pos()
             mx -= cam.x
             my -= cam.y
@@ -201,7 +204,8 @@ while running:
         nx,ny = mouse.get_pos()
         cam.MoveTo(nx - mx,ny - my)
         
-      
+    if spamming:
+        Objects.append(Planet(array([mx,my]),10,-1 * array([0,0])))
     #Drawing objects
     for o in Objects:
         o.draw(cam)
