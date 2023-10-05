@@ -10,6 +10,8 @@ class Planet():
         self.pos = pos
         self.mass = radius * 2
         self.kinematic = False
+        self.grabbed = False
+
     def move(self):
         self.pos = self.pos + self.direction
     def log(self):
@@ -74,10 +76,17 @@ def getAttraction(a,b):
     c = array([b.pos[0] - a.pos[0],b.pos[1] - a.pos[1]])
     c = c / 100 * G * ((a.mass * b.mass) / getDist(a,b)**2 )
     return c
+zero = Planet(array([0,0]),0,array([0,0]))
 
 creating = False
 moving = False
+grabbed = False
+paused = False
+forcing = False
+redirecting = False
+redirected = zero
 cam = Camera(0,0,WIDTH,HEIGHT)
+
 while running:
     #Control of framerate
     clock.tick(FPS)
@@ -112,45 +121,96 @@ while running:
             
         if e.type == MOUSEBUTTONDOWN and e.button == 3 and not(creating) and not(moving):
             mx,my = mouse.get_pos()
+            mx -= cam.x
+            my -= cam.y
             for o in Objects:
                 if getDist(Planet(array([mx,my]),0,array([0,0])),o) < o.radius:
                     o.kinematic = not(o.kinematic)
+
+        if e.type == KEYDOWN and e.key == K_r and not(creating) and not(moving):
+            mx,my = mouse.get_pos()
+            mx -= cam.x
+            my -= cam.y
+            for o in Objects:
+                if getDist(Planet(array([mx,my]),0,array([0,0])),o) < o.radius:
+                    redirecting = True
+                    paused = True
+                    redirected = o
+                    
+        if e.type == KEYUP and e.key == K_r and not(creating) and not(moving):
+            
+            nx,ny = mouse.get_pos()
+            nx -= cam.x
+            ny -= cam.y
+            paused = False
+            redirecting = False
+            for o in Objects:
+                if o == redirected and getDist(Planet(array([nx,ny]),0,array([0,0])),o) > o.radius:
+                    
+                    o.direction = -1 * array([(nx - o.pos[0]) * 0.06,(ny - o.pos[1]) * 0.06])
+                elif o == redirected and getDist(Planet(array([nx,ny]),0,array([0,0])),o) < o.radius:
+                    o.direction = array([0,0])
+            redirected = zero
+        # TO add all time creating of planet by pressing c
+        if e.type == KEYDOWN and e.key == K_c and not(creating) and not(moving):
+            
+            mx,my = mouse.get_pos()
+            mx -= cam.x
+            my -= cam.y
+            Objects.append(Planet(array([mx,my]),10,-1 * array([0,0])))
+        if e.type == KEYUP and e.key == K_TAB and not(creating) and not(moving):
+            paused = not(paused)
+        if e.type == KEYDOWN and e.key == K_d and not(creating) and not(moving):
+            print("d")
+            mx,my = mouse.get_pos()
+            mx -= cam.x
+            my -= cam.y
+            for o in Objects:
+                if getDist(Planet(array([mx,my]),0,array([0,0])),o) < o.radius:
+                    Objects.remove(o)
+
     #Events reacts
     for o in Objects:
         for k in Objects:
-            if o != k:
+            if o != k and not(paused) and not(o.kinematic):
                 o.force(getAttraction(o,k) * k.mass / (o.mass + k.mass))
     for o in Objects:
         for k in Objects:
             if getCollision(k,o):
                 if k.mass > o.mass:
-                    k.radius = k.radius + o.radius
+                    k.radius = k.radius + o.radius * 10 / k.radius 
                     k.mass += o.mass
-                    k.direction = k.direction / k.mass + o.direction / o.mass
+                    if o.kinematic:
+                        k.kinematic = True
+                    k.direction = k.direction / k.mass**2 + o.direction / o.mass**2
                     Objects.remove(o)
                 else:
-                    o.radius = k.radius + o.radius
+                    o.radius = k.radius * 10 / o.radius  + o.radius 
                     o.mass += k.mass
-                    o.direction = o.direction / o.mass + k.direction / k.mass
+                    if k.kinematic:
+                        o.kinematic = True
+                    o.direction = o.direction / o.mass**2 + k.direction / k.mass**2
                     Objects.remove(k)
 
             
     for o in Objects:
-        if not(o.kinematic):
+        if not(o.kinematic) and not(paused):
             o.move()
         
     if moving:
         nx,ny = mouse.get_pos()
         cam.MoveTo(nx - mx,ny - my)
         
-        
+      
     #Drawing objects
     for o in Objects:
         o.draw(cam)
     if creating:
         nx,ny = mouse.get_pos()
         draw.line(window,BLACK,[mx + cam.x,my+ cam.y],[nx,ny],3)
-      
+    if redirecting:
+        nx,ny = mouse.get_pos()
+        draw.line(window,BLACK,[redirected.pos[0] + cam.x,redirected.pos[1]+ cam.y],[nx,ny],3)
     #print(i)
     display.update()   
     i+= 1
