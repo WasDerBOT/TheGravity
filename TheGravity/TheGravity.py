@@ -55,7 +55,7 @@ font = font.SysFont("C:\Windows\Fonts\Arial",100)
 G = 1
 
 
-i = 0
+
 window.fill(WHITE)
 
 
@@ -217,4 +217,4 @@ while running:
         draw.line(window,BLACK,[redirected.pos[0] + cam.x,redirected.pos[1]+ cam.y],[nx,ny],3)
     #print(i)
     display.update()   
-    i+= 1
+    
