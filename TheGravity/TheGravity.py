@@ -185,14 +185,14 @@ while running:
                     k.mass += o.mass
                     if o.kinematic:
                         k.kinematic = True
-                    k.direction = k.direction / k.mass**2 + o.direction / o.mass**2
+                    k.direction = k.direction * (k.mass / (k.mass + o.mass)) + o.direction * (o.mass / (k.mass + o.mass))
                     Objects.remove(o)
                 else:
                     o.radius = k.radius * 10 / o.radius  + o.radius 
                     o.mass += k.mass
                     if k.kinematic:
                         o.kinematic = True
-                    o.direction = o.direction / o.mass**2 + k.direction / k.mass**2
+                    o.direction = o.direction * (o.mass / (k.mass + o.mass)) + k.direction * (k.mass / (k.mass + o.mass))
                     Objects.remove(k)
 
             
